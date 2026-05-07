@@ -795,3 +795,50 @@ hr.divider { border: none; border-top: 1px solid var(--border); margin: 40px 0; 
   .nav-search input:focus { width: 200px; }
   .profile-header { flex-direction: column; align-items: flex-start; }
 }
+/* MOBILE NAVBAR */
+@media (max-width:768px){
+
+  .navbar{
+    padding:12px 20px;
+    height:auto;
+    flex-wrap:wrap;
+    gap:12px;
+  }
+
+  .logo{
+    font-size:1.5rem;
+  }
+
+  .nav-links{
+    width:100%;
+    order:3;
+    justify-content:center;
+    gap:18px;
+    flex-wrap:wrap;
+  }
+
+  .nav-links a{
+    font-size:0.85rem;
+  }
+
+  .nav-search{
+    width:100%;
+    order:4;
+    justify-content:center;
+  }
+
+  .nav-search input{
+    width:100%;
+    max-width:260px;
+  }
+
+  .nav-search input:focus{
+    width:100%;
+    max-width:260px;
+  }
+
+  #navAvatar{
+    width:30px !important;
+    height:30px !important;
+  }
+}
