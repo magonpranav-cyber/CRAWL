@@ -184,7 +184,7 @@ function buildCard(movie) {
     if (movie.poster_path != null) {
         posterUrl = IMG_BASE + 'w300' + movie.poster_path;
     } else {
-        posterUrl = 'https://via.placeholder.com/180x270/10101e/888?text=No+Poster';
+      posterUrl = 'fallback.jpg';
     }
 
     // Get movie title (some TMDB results use "name" instead of "title")
@@ -216,7 +216,7 @@ function buildCard(movie) {
     html += '<div class="card" onclick="goToDetails(' + movie.id + ')">';
     html += '<span class="' + eyeClass + '" onclick="toggleWatched(' + movie.id + ',\'' + movieTitle + '\',\'' + movie.poster_path + '\',event)">👁</span>';
     html += '<span class="' + heartClass + '" onclick="toggleFavorite(' + movie.id + ',\'' + movieTitle + '\',\'' + movie.poster_path + '\',event)">❤</span>';
-    html += '<img src="' + posterUrl + '" loading="lazy" onerror="this.src=\'https://via.placeholder.com/180x270/10101e/888?text=No+Poster\'">';
+  html += '<img src="' + posterUrl + '" loading="lazy" onerror="this.src=\'fallback.jpg\'">';
     html += '<div class="card-info">';
     html += '<h4>' + movieTitle + '</h4>';
     html += '<p>⭐ ' + rating + '</p>';
