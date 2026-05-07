@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CineCrawl | Home</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+</head>
+<body>
+
+  <!-- NAVBAR -->
+  <nav class="navbar">
+    <a href="index.html" class="logo">CineCrawl 🎬</a>
+    <div class="nav-links">
+      <a href="index.html" class="active">Home</a>
+      <a href="crawl.html">The Crawl</a>
+      <a href="chatrooms.html">CineRooms</a>
+      <div class="nav-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search movies...">
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <a href="profile.html">
+        <img id="navAvatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid var(--neon-red);">
+      </a>
+      <button onclick="logout()" class="btn-outline" style="padding:8px 16px; font-size:0.8rem;">Logout</button>
+    </div>
+  </nav>
+
+  <!-- HERO SECTION -->
+  <div class="hero" style="padding-top:120px;">
+    <p style="font-size:0.8rem; letter-spacing:3px; color:var(--neon-red); font-weight:700; margin-bottom:12px;">WELCOME TO</p>
+    <h1 class="hero-tagline">Your <span>Cinema</span><br>Universe</h1>
+    <p class="hero-sub">Discover films by mood, franchise, or vibe. Built for the serious movie lover.</p>
+    <div style="display:flex; gap:14px; flex-wrap:wrap;">
+      <a href="crawl.html" class="btn-glow">Start The Crawl →</a>
+      <a href="profile.html" class="btn-outline">My Profile</a>
+    </div>
+  </div>
+
+  <!-- STUDIOS / FRANCHISES SECTION -->
+  <div class="studio-section">
+    <h2 class="section-title">🎬 Explore <span>Universes</span></h2>
+    <div class="studio-grid" id="studioGrid"></div>
+  </div>
+
+  <!-- TRENDING THIS WEEK -->
+  <section class="row">
+    <div class="row-header">
+      <h2 class="section-title" style="margin:0;">🔥 Trending <span>This Week</span></h2>
+      <a href="results.html?mode=trending" class="see-all">See All →</a>
+    </div>
+    <div class="horizontal-scroll" id="trendingRow">
+      <div class="loader"><span></span><span></span><span></span></div>
+    </div>
+  </section>
+
+  <!-- TOP RATED -->
+  <section class="row">
+    <div class="row-header">
+      <h2 class="section-title" style="margin:0;">⭐ Top <span>Rated</span></h2>
+      <a href="results.html?mode=toprated" class="see-all">See All →</a>
+    </div>
+    <div class="horizontal-scroll" id="topRatedRow">
+      <div class="loader"><span></span><span></span><span></span></div>
+    </div>
+  </section>
+
+  <!-- EVERGREEN MOVIES -->
+  <div class="studio-section" style="padding-top:0;">
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h2 class="section-title" style="margin-bottom:4px;">🌿 <span>Evergreen</span> Movies</h2>
+        <p style="color:var(--muted); font-size:0.87rem; font-weight:300;">Timeless classics that never get old — watch them any time, any mood</p>
+      </div>
+    </div>
+
+    <!-- Category filter tabs for evergreen -->
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:24px;" id="evergreenTabs">
+      <button class="filter-btn active" onclick="switchEvergreen('all',     this)">All Time</button>
+      <button class="filter-btn"        onclick="switchEvergreen('bollywood',this)">🎭 Bollywood</button>
+      <button class="filter-btn"        onclick="switchEvergreen('hollywood',this)">🎬 Hollywood</button>
+      <button class="filter-btn"        onclick="switchEvergreen('family',   this)">👨‍👩‍👧 Family</button>
+      <button class="filter-btn"        onclick="switchEvergreen('animated', this)">🎨 Animated</button>
+    </div>
+
+    <!-- Evergreen movie cards (hand-picked classics) -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(160px,1fr)); gap:16px;" id="evergreenGrid"></div>
+  </div>
+
+  <!-- CINEROOMS PREVIEW -->
+  <div class="studio-section" style="padding-top:0;">
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px;">
+      <div>
+        <h2 class="section-title" style="margin-bottom:4px;">💬 Join <span>CineRooms</span></h2>
+        <p style="color:var(--muted); font-size:0.87rem; font-weight:300;">Live communities for every kind of movie fan</p>
+      </div>
+      <a href="chatrooms.html" class="see-all">Browse All Rooms →</a>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:14px;" id="roomsPreview"></div>
+    <div style="text-align:center; margin-top:22px;">
+      <a href="chatrooms.html" class="btn-glow" style="display:inline-block; text-decoration:none; padding:13px 32px;">＋ Create Your Own Room</a>
+    </div>
+  </div>
+
+  <!-- NOW PLAYING -->
+  <section class="row" style="margin-bottom:80px;">
+    <div class="row-header">
+      <h2 class="section-title" style="margin:0;">🎟️ Now <span>Playing</span></h2>
+    </div>
+    <div class="horizontal-scroll" id="nowPlayingRow">
+      <div class="loader"><span></span><span></span><span></span></div>
+    </div>
+  </section>
+
+
+  <script>
+    // List of studios/franchises to show on homepage
+    var studios = [
+      { id: 420,  name: 'Marvel',       emoji: '🦸' },
+      { id: 9993, name: 'DC',           emoji: '🦇' },
+      { id: 174,  name: 'Warner Bros',  emoji: '🎥' },
+      { id: 521,  name: 'Disney',       emoji: '✨' },
+      { id: 33,   name: 'Universal',    emoji: '🌍' },
+      { id: 4,    name: 'Paramount',    emoji: '⛰️' },
+      { id: 12,   name: 'New Line',     emoji: '💍' },
+      { id: 1632, name: 'Lionsgate',    emoji: '🦁' },
+      { id: 25,   name: '20th Century', emoji: '🎞️' },
+      { id: 7505, name: 'Harry Potter', emoji: '⚡' },
+      { id: 923,  name: 'Pixar',        emoji: '🤖' },
+      { id: 2,    name: 'Walt Disney',  emoji: '🏰' },
+    ];
+
+    // Build the studio grid HTML
+    var studioHTML = '';
+    for (var i = 0; i < studios.length; i++) {
+      var s = studios[i];
+      studioHTML += '<div class="studio-bubble" onclick="goToStudio(' + s.id + ', \'' + s.name + '\')">';
+      studioHTML += '<span class="studio-emoji">' + s.emoji + '</span>';
+      studioHTML += '<span class="studio-name">' + s.name + '</span>';
+      studioHTML += '</div>';
+    }
+    document.getElementById('studioGrid').innerHTML = studioHTML;
+
+
+    // Load movies from TMDB and put them into a row
+    async function loadRow(apiEndpoint, containerId) {
+      var data = await tmdbFetch(apiEndpoint);
+      var movies = data.results;
+
+      var html = '';
+      for (var i = 0; i < movies.length; i++) {
+        html += buildCard(movies[i]);
+      }
+      document.getElementById(containerId).innerHTML = html;
+    }
+
+    // Load all three rows
+    loadRow('trending/movie/week', 'trendingRow');
+    loadRow('movie/top_rated', 'topRatedRow');
+    loadRow('movie/now_playing', 'nowPlayingRow');
+
+    // ── EVERGREEN MOVIES ──
+    // Hand-picked classic films by category using their TMDB IDs
+    var evergreenMovies = [
+      // ALL TIME classics
+      { id: 278,    title: 'The Shawshank Redemption', year: '1994', emoji: '🏛️',  cat: 'hollywood', poster: '/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg' },
+      { id: 238,    title: 'The Godfather',             year: '1972', emoji: '🤌',  cat: 'hollywood', poster: '/3bhkrj58Vtu7enYsLe1rhdBt4i0.jpg' },
+      { id: 424,    title: "Schindler's List",          year: '1993', emoji: '📜',  cat: 'hollywood', poster: '/sF1U4EUQS8YHUYjNl3pMGNIQyr0.jpg' },
+      { id: 129,    title: 'Spirited Away',             year: '2001', emoji: '🌊',  cat: 'animated',  poster: '/39wmItIWsg5sZMyRUHLkWBcuVCM.jpg' },
+      { id: 19404,  title: 'Dilwale Dulhania Le Jayenge', year: '1995', emoji: '💛', cat: 'bollywood', poster: '/lfRkUr7DYdHldAw3IA0xXHh7Hu3.jpg' },
+      { id: 15121,  title: 'Dil Chahta Hai',            year: '2001', emoji: '🎸',  cat: 'bollywood', poster: '/nBEFKpQLqxVZWmkfSTaUlLpXfvY.jpg' },
+      { id: 10515,  title: 'Castle in the Sky',         year: '1986', emoji: '🏰',  cat: 'animated',  poster: '/npOnzAbLh6VOIu3naU5g5sGPAbJ.jpg' },
+      { id: 120,    title: 'The Lord of the Rings',     year: '2001', emoji: '💍',  cat: 'hollywood', poster: '/6oom5QYQ2yQTMJIbnvbkBL9cHo6.jpg' },
+      { id: 862,    title: 'Toy Story',                 year: '1995', emoji: '🤠',  cat: 'family',    poster: '/uXDfjJbdP4ijW5hWSBrPrlKpxab.jpg' },
+      { id: 585,    title: 'Monsters, Inc.',            year: '2001', emoji: '👾',  cat: 'family',    poster: '/sgheSKxZkttIe8ONsf2sWXPgip3.jpg' },
+      { id: 149870, title: '3 Idiots',                  year: '2009', emoji: '🎓',  cat: 'bollywood', poster: '/66A9MqXZyHKAaU0sK6sHRDLJhtX.jpg' },
+      { id: 78,     title: 'Goodfellas',                year: '1990', emoji: '🔫',  cat: 'hollywood', poster: '/aKuFiU82s5ISJpGZp7YkIr3kCUd.jpg' },
+      { id: 497,    title: 'The Green Mile',            year: '1999', emoji: '🕯️', cat: 'hollywood', poster: '/8VG8fDNiy50H4FedGwdSVUPoaJe.jpg' },
+      { id: 769,    title: 'GoodWill Hunting',          year: '1997', emoji: '📐',  cat: 'hollywood', poster: '/bABCBKYBK7A5G1x0FzoeoNfuj2.jpg' },
+      { id: 98,     title: 'Gladiator',                 year: '2000', emoji: '⚔️', cat: 'hollywood', poster: '/ty8TGRuvJLPUmAR1H1nRIsgwvim.jpg' },
+      { id: 372058, title: 'Your Name',                 year: '2016', emoji: '🌠',  cat: 'animated',  poster: '/q719jXXEzOoYaps6babgKnONONX.jpg' },
+      { id: 264644, title: 'Room',                      year: '2015', emoji: '🚪',  cat: 'hollywood', poster: '/mFQs5HTmMiZMvAuDqJxKSJLsIlF.jpg' },
+      { id: 9806,   title: 'The Incredibles',           year: '2004', emoji: '🦸',  cat: 'family',    poster: '/2LqaLgk4Z226KkgPJuiOQ58ShpS.jpg' },
+      { id: 12477,  title: 'Grave of the Fireflies',   year: '1988', emoji: '🕯️', cat: 'animated',  poster: '/k9tv1rXZbOhH7eiCk378x61kNQ1.jpg' },
+      { id: 121,    title: 'The Lord of the Rings: Two Towers', year: '2002', emoji: '🧙', cat: 'hollywood', poster: '/5VTN0pR8gcqV3EPUHHfMGnJYbd9.jpg' },
+    ];
+
+    // Which category is currently showing
+    var currentEvergreenCat = 'all';
+
+    // Show evergreen movies filtered by category
+    function showEvergreenMovies(cat) {
+      var grid = document.getElementById('evergreenGrid');
+      grid.innerHTML = '';
+
+      for (var i = 0; i < evergreenMovies.length; i++) {
+        var movie = evergreenMovies[i];
+
+        // If a specific category is chosen, skip movies not in it
+        if (cat != 'all' && movie.cat != cat) {
+          continue;
+        }
+
+        var posterUrl = 'https://via.placeholder.com/160x240/10101e/888?text=' + encodeURIComponent(movie.title);
+        if (movie.poster != null) {
+          posterUrl = 'https://image.tmdb.org/t/p/w300' + movie.poster;
+        }
+
+        // Each evergreen card — clicking opens details page
+        var cardHTML = '';
+        cardHTML += '<div onclick="goToDetails(' + movie.id + ')" style="cursor:pointer; position:relative; border-radius:14px; overflow:hidden; border:1px solid var(--border); background:var(--surface); transition:all 0.25s;" ';
+        cardHTML += 'onmouseover="this.style.transform=\'translateY(-6px)\'; this.style.borderColor=\'rgba(229,25,58,0.5)\'; this.style.boxShadow=\'0 16px 40px rgba(0,0,0,0.4)\'" ';
+        cardHTML += 'onmouseout="this.style.transform=\'\'; this.style.borderColor=\'var(--border)\'; this.style.boxShadow=\'\'">';
+
+        // Poster image
+        cardHTML += '<img src="' + posterUrl + '" style="width:100%; aspect-ratio:2/3; object-fit:cover; display:block;" onerror="this.src=\'https://via.placeholder.com/160x240/10101e/888?text=No+Poster\'">';
+
+        // Classic badge
+        cardHTML += '<div style="position:absolute; top:8px; left:8px; background:rgba(245,200,66,0.9); color:#000; font-size:0.62rem; font-weight:800; padding:3px 8px; border-radius:50px; letter-spacing:0.5px;">CLASSIC</div>';
+
+        // Title and year
+        cardHTML += '<div style="padding:10px 12px 14px;">';
+        cardHTML += '<h4 style="font-size:0.82rem; font-weight:700; margin-bottom:3px; color:var(--text);">' + movie.title + '</h4>';
+        cardHTML += '<p style="font-size:0.75rem; color:var(--muted);">' + movie.emoji + ' ' + movie.year + '</p>';
+        cardHTML += '</div>';
+
+        cardHTML += '</div>';
+
+        grid.innerHTML += cardHTML;
+      }
+
+      // If no movies found for this filter
+      if (grid.innerHTML == '') {
+        grid.innerHTML = '<p style="color:var(--muted); padding:20px;">No movies found for this category.</p>';
+      }
+    }
+
+    // Switch evergreen category tab
+    function switchEvergreen(cat, buttonEl) {
+      currentEvergreenCat = cat;
+
+      // Remove active class from all tab buttons
+      var tabs = document.getElementById('evergreenTabs').querySelectorAll('button');
+      for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove('active');
+      }
+      buttonEl.classList.add('active');
+
+      showEvergreenMovies(cat);
+    }
+
+    // Show all evergreen movies on page load
+    showEvergreenMovies('all');
+
+
+    // Featured chat rooms preview
+    var featuredRooms = [
+      { id:'marvel-mcu',   name:'Marvel Universe',  desc:'MCU movies, theories & spoilers',           emoji:'🦸', members:1284, color:'#e23636', hot:true  },
+      { id:'dc-fans',      name:'DC Universe',       desc:'Batman, Superman & the DC multiverse',       emoji:'🦇', members:876,  color:'#3b5bdb', hot:false },
+      { id:'horror-hub',   name:'Horror Hub',        desc:'Scary movies, slashers & psychological horror', emoji:'💀', members:543, color:'#7b2d8b', hot:false },
+      { id:'bollywood',    name:'Bollywood Lounge',  desc:'Hindi cinema classics to blockbusters',     emoji:'🎭', members:721,  color:'#e67e22', hot:false },
+      { id:'harry-potter', name:'Potterheads',       desc:'The wizarding world & everything magical',  emoji:'⚡', members:934,  color:'#8B4513', hot:true  },
+      { id:'sci-fi',       name:'Sci-Fi Sector',     desc:'Interstellar, dystopias & futuristic worlds', emoji:'🚀', members:612, color:'#00a8e8', hot:false },
+    ];
+
+    var roomsHTML = '';
+    for (var i = 0; i < featuredRooms.length; i++) {
+      var room = featuredRooms[i];
+
+      // Format member count: 1284 → 1.3k
+      var membersText = room.members;
+      if (room.members >= 1000) {
+        membersText = (room.members / 1000).toFixed(1) + 'k';
+      }
+
+      // Hot badge HTML
+      var hotBadge = '';
+      if (room.hot) {
+        hotBadge = '<span style="background:var(--neon-red); color:#fff; font-size:0.58rem; font-weight:700; padding:2px 6px; border-radius:50px; margin-left:6px;">HOT</span>';
+      }
+
+      roomsHTML += '<a href="chatrooms.html" style="text-decoration:none;">';
+      roomsHTML += '<div style="background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:18px; cursor:pointer; transition:all 0.25s;" ';
+      roomsHTML += 'onmouseover="this.style.borderColor=\'' + room.color + '\'; this.style.transform=\'translateY(-4px)\'" ';
+      roomsHTML += 'onmouseout="this.style.borderColor=\'var(--border)\'; this.style.transform=\'\'">';
+      roomsHTML += '<div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">';
+      roomsHTML += '<div style="width:44px; height:44px; border-radius:11px; background:' + room.color + '22; display:flex; align-items:center; justify-content:center; font-size:1.4rem;">' + room.emoji + '</div>';
+      roomsHTML += '<div style="font-weight:700; font-size:0.9rem;">' + room.name + hotBadge + '</div>';
+      roomsHTML += '</div>';
+      roomsHTML += '<p style="font-size:0.8rem; color:var(--muted); margin-bottom:10px;">' + room.desc + '</p>';
+      roomsHTML += '<p style="font-size:0.75rem; color:#2ecc71;">● ' + membersText + ' members</p>';
+      roomsHTML += '</div>';
+      roomsHTML += '</a>';
+    }
+    document.getElementById('roomsPreview').innerHTML = roomsHTML;
+
+
+    // Set the nav avatar image
+    var username = localStorage.getItem('userSession');
+    var profileData = localStorage.getItem('cc_profile_' + username);
+    var avatarUrl = 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + username;
+    if (profileData != null) {
+      var profile = JSON.parse(profileData);
+      if (profile.avatarUrl != null) {
+        avatarUrl = profile.avatarUrl;
+      }
+    }
+    document.getElementById('navAvatar').src = avatarUrl;
+
+    // Init the search bar
+    initSearch();
+  </script>
+
+</body>
+</html>

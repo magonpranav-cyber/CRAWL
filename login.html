@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login | CineCrawl</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+   
+    .bg-posters {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      opacity: 0.08;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .bg-posters img {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      filter: grayscale(100%);
+    }
+
+    /* Red glow in background */
+    .bg-glow {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(229,25,58,0.12), transparent 60%);
+      z-index: 0;
+    }
+
+    /* The main login box */
+    .login-box {
+      position: relative;
+      z-index: 1;
+      background: rgba(16, 16, 30, 0.92);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 28px;
+      padding: 48px 44px;
+      width: 400px;
+      max-width: 92vw;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+    }
+
+    /* Tab buttons (Sign In / Create Account) */
+    .tab-row {
+      display: flex;
+      background: var(--surface2);
+      border-radius: 50px;
+      padding: 4px;
+      margin-bottom: 28px;
+      border: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.85rem;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .tab-btn.active {
+      background: var(--neon-red);
+      color: white;
+    }
+
+    /* Divider line with OR text */
+    .or-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin: 20px 0;
+    }
+    .or-line::before, .or-line::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Error message */
+    .error-msg {
+      color: var(--neon-red);
+      font-size: 0.82rem;
+      margin-bottom: 12px;
+      display: none;
+    }
+  </style>
+</head>
+<body style="display:flex; align-items:center; justify-content:center; min-height:100vh;">
+
+  <!-- Background poster grid (loaded by JS below) -->
+  <div class="bg-posters" id="bgPosters"></div>
+  <div class="bg-glow"></div>
+
+  <!-- Main Login Box -->
+  <div class="login-box">
+
+    <div class="login-logo">CineCrawl 🎬</div>
+    <p class="login-sub">Your universe of cinema awaits.</p>
+
+    <!-- Sign In / Create Account tabs -->
+    <div class="tab-row">
+      <button class="tab-btn active" id="btnSignIn"  onclick="showTab('signin')">Sign In</button>
+      <button class="tab-btn"        id="btnSignUp"  onclick="showTab('signup')">Create Account</button>
+    </div>
+
+    <!-- SIGN IN FORM -->
+    <div id="formSignIn">
+      <div class="form-group">
+        <label>USERNAME</label>
+        <input type="text"     class="form-input" id="siUsername" placeholder="Your username">
+      </div>
+      <div class="form-group" style="margin-top:14px;">
+        <label>PASSWORD</label>
+        <input type="password" class="form-input" id="siPassword" placeholder="••••••••">
+      </div>
+      <p class="error-msg" id="siError">❌ Wrong username or password</p>
+      <button class="btn-glow" style="width:100%; margin-top:16px;" onclick="doSignIn()">
+        Enter Cinema →
+      </button>
+    </div>
+
+    <!-- CREATE ACCOUNT FORM -->
+    <div id="formSignUp" style="display:none;">
+      <div class="form-group">
+        <label>YOUR NAME</label>
+        <input type="text"     class="form-input" id="suName"     placeholder="e.g. Ravi Sharma">
+      </div>
+      <div class="form-group" style="margin-top:14px;">
+        <label>USERNAME</label>
+        <input type="text"     class="form-input" id="suUsername" placeholder="Pick a unique username">
+      </div>
+      <div class="form-group" style="margin-top:14px;">
+        <label>PASSWORD</label>
+        <input type="password" class="form-input" id="suPassword" placeholder="Min 6 characters">
+      </div>
+      <p class="error-msg" id="suError">❌ Username already taken</p>
+      <button class="btn-glow" style="width:100%; margin-top:16px;" onclick="doSignUp()">
+        Create Account →
+      </button>
+    </div>
+
+    <div class="or-line">or</div>
+
+    <!-- Guest login button -->
+    <button class="btn-outline" style="width:100%;" onclick="guestLogin()">
+      👤 Continue as Guest
+    </button>
+
+  </div>
+
+  <script>
+    // ── Load trending posters as background ──
+    async function loadBgPosters() {
+      try {
+        var token = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIwM2EzYzM0Zjg4MDNlMmNmOTkwNDRkMGNiYTJhZDRkMiIsIm5iZiI6MTc3MzI0MDMwMS40MDEsInN1YiI6IjY5YjE3ZmVkZDVkNmZkMjNhYTA5NDRlYyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.ec-LTPbqPDm-oq4QSmB1oVTIMG4YKON7svOcwgwhIXA';
+        var response = await fetch('https://api.themoviedb.org/3/trending/movie/week', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        var data = await response.json();
+        var movies = data.results;
+
+        var html = '';
+        for (var i = 0; i < movies.length && i < 14; i++) {
+          if (movies[i].poster_path) {
+            html += '<img src="https://image.tmdb.org/t/p/w200' + movies[i].poster_path + '" loading="lazy">';
+          }
+        }
+        document.getElementById('bgPosters').innerHTML = html;
+      } catch (e) {
+        // If posters fail to load, that's fine — bg will just be empty
+      }
+    }
+    loadBgPosters();
+
+
+    // ── Switch between Sign In and Sign Up tabs ──
+    function showTab(tab) {
+      if (tab == 'signin') {
+        document.getElementById('formSignIn').style.display = 'block';
+        document.getElementById('formSignUp').style.display = 'none';
+        document.getElementById('btnSignIn').classList.add('active');
+        document.getElementById('btnSignUp').classList.remove('active');
+      } else {
+        document.getElementById('formSignIn').style.display = 'none';
+        document.getElementById('formSignUp').style.display = 'block';
+        document.getElementById('btnSignIn').classList.remove('active');
+        document.getElementById('btnSignUp').classList.add('active');
+      }
+    }
+
+
+    // ── SIGN IN ──
+    function doSignIn() {
+      var username = document.getElementById('siUsername').value.trim();
+      var password = document.getElementById('siPassword').value;
+      var errorEl  = document.getElementById('siError');
+
+      // Get all saved users from localStorage
+      var usersData = localStorage.getItem('cc_users');
+      var users = {};
+      if (usersData != null) {
+        users = JSON.parse(usersData);
+      }
+
+      // Check if username exists and password matches
+      if (users[username] == null || users[username].password != password) {
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // Login successful
+      errorEl.style.display = 'none';
+      localStorage.setItem('userSession', username);
+      window.location.href = 'index.html';
+    }
+
+
+    // ── SIGN UP ──
+    function doSignUp() {
+      var name     = document.getElementById('suName').value.trim();
+      var username = document.getElementById('suUsername').value.trim();
+      var password = document.getElementById('suPassword').value;
+      var errorEl  = document.getElementById('suError');
+
+      // Basic checks
+      if (username == '' || password == '') {
+        errorEl.textContent = '❌ Please fill in all fields.';
+        errorEl.style.display = 'block';
+        return;
+      }
+      if (password.length < 6) {
+        errorEl.textContent = '❌ Password must be at least 6 characters.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // Get existing users
+      var usersData = localStorage.getItem('cc_users');
+      var users = {};
+      if (usersData != null) {
+        users = JSON.parse(usersData);
+      }
+
+      // Check if username is already taken
+      if (users[username] != null) {
+        errorEl.textContent = '❌ That username is already taken.';
+        errorEl.style.display = 'block';
+        return;
+      }
+
+      // Save new user
+      users[username] = {
+        name: name || username,
+        password: password,
+        joined: new Date().toLocaleDateString()
+      };
+      localStorage.setItem('cc_users', JSON.stringify(users));
+
+      // Auto login after signup
+      localStorage.setItem('userSession', username);
+      window.location.href = 'index.html';
+    }
+
+
+    // ── GUEST LOGIN ──
+    function guestLogin() {
+      localStorage.setItem('userSession', 'Guest');
+      window.location.href = 'index.html';
+    }
+
+
+    // Allow pressing Enter key to submit
+    document.addEventListener('keydown', function(event) {
+      if (event.key == 'Enter') {
+        var signupVisible = document.getElementById('formSignUp').style.display;
+        if (signupVisible == 'none' || signupVisible == '') {
+          doSignIn();
+        } else {
+          doSignUp();
+        }
+      }
+    });
+
+  </script>
+</body>
+</html>

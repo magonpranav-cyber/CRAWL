@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Crawl | CineCrawl</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">CineCrawl 🎬</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="crawl.html" class="active">The Crawl</a>
+      <a href="chatrooms.html">CineRooms</a>
+    </div>
+    <a href="profile.html">
+      <img id="navAvatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid var(--neon-red);">
+    </a>
+  </nav>
+
+  <section class="section" style="padding-top:120px;">
+    <div class="crawl-container">
+
+      <!-- Step progress indicator -->
+      <div class="step-indicator">
+        <div class="step-dot active">1</div>
+        <div class="step-line"></div>
+        <div class="step-dot">2</div>
+        <div class="step-line"></div>
+        <div class="step-dot">3</div>
+      </div>
+
+      <h2 style="text-align:center; font-family:'Bebas Neue',sans-serif; font-size:2.8rem; letter-spacing:2px;">
+        How are you <span style="color:var(--neon-red);">Feeling?</span>
+      </h2>
+      <p style="text-align:center; color:var(--muted); font-weight:300;">Step 1 of 2 — Pick your current mood</p>
+
+      <!-- Mood buttons grid -->
+      <div class="mood-grid">
+
+        <div class="mood-item" onclick="pickMood('energetic')">
+          <div class="emoji">⚡</div>
+          <p>Energetic</p>
+          <small>Action & Thrill</small>
+        </div>
+
+        <div class="mood-item" onclick="pickMood('melancholy')">
+          <div class="emoji">🌑</div>
+          <p>Melancholy</p>
+          <small>Drama & Emotion</small>
+        </div>
+
+        <div class="mood-item" onclick="pickMood('mind-bending')">
+          <div class="emoji">🤯</div>
+          <p>Mind-Bending</p>
+          <small>Mystery & Sci-Fi</small>
+        </div>
+
+        <div class="mood-item" onclick="pickMood('relaxed')">
+          <div class="emoji">🧘</div>
+          <p>Relaxed</p>
+          <small>Chill & Adventure</small>
+        </div>
+
+        <div class="mood-item" onclick="pickMood('romantic')">
+          <div class="emoji">💖</div>
+          <p>Romantic</p>
+          <small>Love & Warmth</small>
+        </div>
+
+        <div class="mood-item" onclick="pickMood('suspenseful')">
+          <div class="emoji">🔦</div>
+          <p>Suspenseful</p>
+          <small>Thriller & Crime</small>
+        </div>
+
+        <div class="mood-item" onclick="pickMood('laugh')">
+          <div class="emoji">😂</div>
+          <p>Laugh Out Loud</p>
+          <small>Comedy & Fun</small>
+        </div>
+
+        <div class="mood-item" onclick="pickMood('animated')">
+          <div class="emoji">🎨</div>
+          <p>Animated</p>
+          <small>Animation & Family</small>
+        </div>
+
+        <div class="mood-item" onclick="pickMood('dark')">
+          <div class="emoji">💀</div>
+          <p>Dark & Gritty</p>
+          <small>Horror & Noir</small>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // When user clicks a mood, save it and go to next step
+    function pickMood(mood) {
+      localStorage.setItem('selectedMood', mood);
+      window.location.href = 'intensity.html';
+    }
+
+    // Set avatar in navbar
+    var username = localStorage.getItem('userSession');
+    var profileData = localStorage.getItem('cc_profile_' + username);
+    var avatarUrl = 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + username;
+    if (profileData != null) {
+      var profile = JSON.parse(profileData);
+      if (profile.avatarUrl != null) {
+        avatarUrl = profile.avatarUrl;
+      }
+    }
+    document.getElementById('navAvatar').src = avatarUrl;
+  </script>
+
+</body>
+</html>
