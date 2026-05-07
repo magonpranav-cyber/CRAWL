@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Movie Details | CineCrawl</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+  <style>
+    .cast-scroll { display:flex; gap:16px; overflow-x:auto; padding-bottom:12px; margin-top:16px; }
+    .cast-card { flex:0 0 90px; text-align:center; }
+    .cast-card img { width:72px; height:72px; border-radius:50%; object-fit:cover; border:2px solid var(--border); margin-bottom:6px; }
+    .cast-card h5 { font-size:0.78rem; }
+    .cast-card p  { font-size:0.7rem; color:var(--muted); }
+    .trailers-row { display:flex; gap:14px; overflow-x:auto; padding-bottom:12px; margin-top:16px; }
+    .trailer-card { flex:0 0 220px; border-radius:12px; overflow:hidden; cursor:pointer; position:relative; background:var(--surface2); border:1px solid var(--border); }
+    .trailer-card img { width:100%; display:block; }
+    .play-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:2.5rem; background:rgba(0,0,0,0.4); }
+    .trailer-card:hover .play-overlay { background:rgba(229,25,58,0.5); }
+    .review-box { background:var(--surface2); border:1px solid var(--border); border-radius:14px; padding:18px; margin-top:16px; }
+    .review-box .rev-name { font-weight:700; margin-bottom:4px; }
+    .review-box .rev-stars { color:var(--neon-gold); font-size:0.85rem; margin-bottom:6px; }
+    .review-box .rev-text { color:#bbb; font-size:0.85rem; line-height:1.6; }
+
+    /* WHERE TO WATCH styles */
+    .wtw-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 28px;
+      margin-bottom: 10px;
+    }
+    .wtw-section h2 { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; letter-spacing:1px; margin-bottom:6px; }
+    .wtw-section .wtw-sub { color:var(--muted); font-size:0.85rem; margin-bottom:22px; }
+    .wtw-platforms { display:flex; gap:14px; flex-wrap:wrap; }
+    .platform-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 20px;
+      text-decoration: none;
+      color: var(--text);
+      transition: all 0.22s;
+      min-width: 160px;
+    }
+    .platform-card:hover {
+      border-color: var(--neon-red);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .platform-logo { font-size: 2rem; flex-shrink: 0; }
+    .platform-info .p-name { font-weight: 700; font-size: 0.9rem; }
+    .platform-info .p-type { font-size: 0.75rem; color: var(--muted); margin-top:2px; }
+    .in-theatres-box {
+      background: linear-gradient(135deg, rgba(229,25,58,0.15), rgba(229,25,58,0.05));
+      border: 1px solid rgba(229,25,58,0.4);
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+    .in-theatres-box .theatre-icon { font-size: 2.5rem; flex-shrink:0; }
+    .in-theatres-box h3 { font-size: 1rem; font-weight:700; margin-bottom:4px; }
+    .in-theatres-box p  { font-size: 0.82rem; color:var(--muted); }
+    .book-btn {
+      display: inline-block;
+      background: var(--neon-red);
+      color: white;
+      text-decoration: none;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      margin-top: 10px;
+    }
+    .book-btn:hover { box-shadow: 0 0 18px rgba(229,25,58,0.45); transform:scale(1.04); }
+    .book-btn-2 {
+      display: inline-block;
+      background: transparent;
+      color: var(--text);
+      text-decoration: none;
+      padding: 9px 20px;
+      border-radius: 50px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      border: 1.5px solid var(--border);
+      transition: all 0.2s;
+      margin-top: 10px;
+      margin-left: 8px;
+    }
+    .book-btn-2:hover { border-color: var(--neon-red); color: var(--neon-red); }
+    .wtw-not-found { color:var(--muted); font-size:0.88rem; padding:10px 0; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">CineCrawl 🎬</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="crawl.html">The Crawl</a>
+      <div class="nav-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search movies...">
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+    </div>
+    <a href="profile.html">
+      <img id="navAvatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid var(--neon-red);">
+    </a>
+  </nav>
+
+  <!-- Blurred backdrop hero -->
+  <div class="detail-hero" id="detailHero">
+    <div class="detail-backdrop" id="detailBg"></div>
+    <div class="detail-content" id="detailContent">
+      <div class="loader"><span></span><span></span><span></span></div>
+    </div>
+  </div>
+
+  <!-- WHERE TO WATCH section -->
+  <div style="padding:0 5%; margin-top:10px;" id="whereToWatchSection"></div>
+
+  <!-- Cast section -->
+  <div style="padding:0 5%;" id="castSection"></div>
+
+  <!-- Trailers section -->
+  <div style="padding:20px 5%;" id="trailersSection"></div>
+
+  <!-- Rate & Review -->
+  <div class="rating-panel" id="ratingPanel" style="display:none;">
+    <h3>⭐ Rate This Film</h3>
+
+    <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+      <div id="starIcon" style="font-size:3rem; transition:transform 0.2s;">⭐</div>
+      <div style="flex:1; min-width:200px;">
+        <input type="range" min="1" max="10" value="5" class="slider" id="ratingSlider" oninput="updateStarSize(this.value)">
+        <div style="display:flex; justify-content:space-between; color:var(--muted); font-size:0.75rem; margin-top:4px;">
+          <span>1</span><span>5</span><span>10</span>
+        </div>
+      </div>
+      <h2 id="ratingNum" style="font-family:'Bebas Neue',sans-serif; font-size:2.5rem; color:var(--neon-gold);">5 / 10</h2>
+    </div>
+
+    <textarea id="reviewText"  placeholder="Write your thoughts about this film..." style="margin-top:20px; background-color: plum;"></textarea>
+
+    <div style="margin-top:16px; display:flex; gap:12px;">
+      <button class="btn-glow" onclick="saveReview()">Save Review</button>
+      <button class="btn-outline" onclick="document.getElementById('reviewText').value = ''">Clear</button>
+    </div>
+
+    <!-- Show saved review -->
+    <div id="savedReviewBox" style="margin-top:24px;"></div>
+  </div>
+
+  <!-- Similar movies -->
+  <div style="padding:0 5% 80px;" id="similarSection"></div>
+
+
+  <script>
+    // We'll store the movie title here to use it in postReview
+    var currentMovieTitle = '';
+
+    // Load all movie info when page opens
+    async function loadMoviePage() {
+      var movieId = localStorage.getItem('selectedMovieId');
+
+      // If no movie ID saved, go back home
+      if (movieId == null) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // Fetch movie info, cast, trailers, similar movies — all at once
+      var movieData   = await tmdbFetch('movie/' + movieId);
+      var creditsData = await tmdbFetch('movie/' + movieId + '/credits');
+      var videosData  = await tmdbFetch('movie/' + movieId + '/videos');
+      var similarData = await tmdbFetch('movie/' + movieId + '/similar');
+      var watchData   = await tmdbFetch('movie/' + movieId + '/watch/providers');
+
+      currentMovieTitle = movieData.title;
+      document.title = movieData.title + ' | CineCrawl';
+
+      // Set blurred background image
+      var bgImg = '';
+      if (movieData.backdrop_path != null) {
+        bgImg = IMG_BASE + 'original' + movieData.backdrop_path;
+      } else if (movieData.poster_path != null) {
+        bgImg = IMG_BASE + 'original' + movieData.poster_path;
+      }
+      document.getElementById('detailBg').style.backgroundImage = "url('" + bgImg + "')";
+
+      // Build year and runtime text
+      var year = '';
+      if (movieData.release_date != null) {
+        year = movieData.release_date.slice(0, 4);
+      }
+
+      var runtime = 'N/A';
+      if (movieData.runtime != null && movieData.runtime > 0) {
+        var hours   = Math.floor(movieData.runtime / 60);
+        var minutes = movieData.runtime % 60;
+        runtime = hours + 'h ' + minutes + 'm';
+      }
+
+      // Build genre badges
+      var genresHTML = '';
+      if (movieData.genres != null) {
+        for (var i = 0; i < movieData.genres.length; i++) {
+          genresHTML += '<span class="badge">' + movieData.genres[i].name + '</span>';
+        }
+      }
+
+      // Build studio name
+      var studio = '';
+      if (movieData.production_companies != null && movieData.production_companies.length > 0) {
+        studio = movieData.production_companies[0].name;
+      }
+
+      // Check if this movie is already favorited / watched
+      var alreadyFav     = isMovieFavorite(movieData.id);
+      var alreadyWatched = isMovieWatched(movieData.id);
+
+      // Poster image
+      var posterSrc = 'https://via.placeholder.com/280x420/10101e/888?text=No+Poster';
+      if (movieData.poster_path != null) {
+        posterSrc = IMG_BASE + 'w400' + movieData.poster_path;
+      }
+
+      // Fav button text and style
+      var favBtnText  = '🤍 Add to Favorites';
+      var favBtnClass = 'btn-outline';
+      if (alreadyFav) {
+        favBtnText  = '❤️ Favorited';
+        favBtnClass = 'btn-glow';
+      }
+
+      // Watched button text
+      var watchBtnText = '👁 Mark Watched';
+      if (alreadyWatched) {
+        watchBtnText = '✅ Watched';
+      }
+
+      // Build the main detail content HTML
+      var html = '';
+      html += '<img class="detail-poster" src="' + posterSrc + '" onerror="this.src=\'https://via.placeholder.com/280x420/10101e/888?text=No+Poster\'">';
+      html += '<div class="detail-info">';
+      html += '<div class="detail-meta">';
+      html += '<span class="badge">' + year + '</span>';
+      html += '<span class="badge">' + runtime + '</span>';
+      html += '<span class="badge gold">⭐ ' + (movieData.vote_average || 0).toFixed(1) + '</span>';
+      html += genresHTML;
+      html += '</div>';
+      html += '<h1 class="detail-title">' + movieData.title + '</h1>';
+      if (movieData.tagline) {
+        html += '<p style="color:var(--muted); font-style:italic; margin-bottom:16px;">"' + movieData.tagline + '"</p>';
+      }
+      html += '<p class="detail-overview">' + (movieData.overview || 'No description available.') + '</p>';
+      if (studio) {
+        html += '<p style="color:var(--muted); font-size:0.85rem; margin-bottom:24px;">🏢 ' + studio + '</p>';
+      }
+      html += '<div class="detail-actions">';
+      html += '<button class="' + favBtnClass + '" id="favBtn" onclick="clickFav(' + movieData.id + ', \'' + movieData.title + '\', \'' + movieData.poster_path + '\')">' + favBtnText + '</button>';
+      html += '<button class="btn-outline" id="watchBtn" onclick="clickWatched(' + movieData.id + ', \'' + movieData.title + '\', \'' + movieData.poster_path + '\')">' + watchBtnText + '</button>';
+      html += '<button class="btn-outline" onclick="document.getElementById(\'ratingPanel\').scrollIntoView()">⭐ Rate</button>';
+      html += '</div>';
+      html += '</div>';
+
+      document.getElementById('detailContent').innerHTML = html;
+      document.getElementById('ratingPanel').style.display = 'block';
+
+      // Load any existing review the user saved before
+      loadSavedReview(movieId);
+
+      // Load where to watch info
+      loadWhereToWatch(watchData, movieData);
+
+      // ── CAST ──
+      var cast = creditsData.cast;
+      if (cast != null && cast.length > 0) {
+        var castHTML = '<h2 class="section-title">🎭 Cast</h2><div class="cast-scroll">';
+        for (var i = 0; i < cast.length && i < 12; i++) {
+          var actor = cast[i];
+          var actorPic = 'https://via.placeholder.com/72x72/10101e/888?text=?';
+          if (actor.profile_path != null) {
+            actorPic = IMG_BASE + 'w185' + actor.profile_path;
+          }
+          var character = actor.character || '';
+          if (character.length > 18) {
+            character = character.slice(0, 18) + '…';
+          }
+          castHTML += '<div class="cast-card">';
+          castHTML += '<img src="' + actorPic + '" onerror="this.src=\'https://via.placeholder.com/72x72/10101e/888?text=?\'">';
+          castHTML += '<h5>' + actor.name + '</h5>';
+          castHTML += '<p>' + character + '</p>';
+          castHTML += '</div>';
+        }
+        castHTML += '</div>';
+        document.getElementById('castSection').innerHTML = castHTML;
+      }
+
+      // ── TRAILERS ──
+      var videos = videosData.results;
+      var trailers = [];
+      if (videos != null) {
+        for (var i = 0; i < videos.length; i++) {
+          if (videos[i].site == 'YouTube') {
+            trailers.push(videos[i]);
+          }
+          if (trailers.length >= 4) break;
+        }
+      }
+
+      if (trailers.length > 0) {
+        var trailHTML = '<h2 class="section-title">🎞️ Trailers</h2><div class="trailers-row">';
+        for (var i = 0; i < trailers.length; i++) {
+          var key = trailers[i].key;
+          trailHTML += '<div class="trailer-card" onclick="window.open(\'https://youtube.com/watch?v=' + key + '\', \'_blank\')">';
+          trailHTML += '<img src="https://img.youtube.com/vi/' + key + '/mqdefault.jpg">';
+          trailHTML += '<div class="play-overlay">▶️</div>';
+          trailHTML += '</div>';
+        }
+        trailHTML += '</div>';
+        document.getElementById('trailersSection').innerHTML = trailHTML;
+      }
+
+      // ── SIMILAR MOVIES ──
+      var similar = similarData.results;
+      if (similar != null && similar.length > 0) {
+        var simHTML = '<h2 class="section-title">🎬 You Might Also Like</h2><div class="horizontal-scroll">';
+        for (var i = 0; i < similar.length && i < 10; i++) {
+          simHTML += buildCard(similar[i]);
+        }
+        simHTML += '</div>';
+        document.getElementById('similarSection').innerHTML = simHTML;
+      }
+    }
+
+
+    // ── WHERE TO WATCH ──
+    // TMDB gives us streaming provider data for each country.
+    // We try India (IN) first, then US as fallback.
+    function loadWhereToWatch(watchData, movieData) {
+      var section = document.getElementById('whereToWatchSection');
+
+      // TMDB returns results by country code
+      var results = watchData.results;
+      if (results == null) {
+        section.innerHTML = '';
+        return;
+      }
+
+      // Try India first, then US
+      var countryData = results['IN'];
+      var countryName = 'India';
+      if (countryData == null) {
+        countryData = results['US'];
+        countryName = 'US';
+      }
+
+      // Platform logos mapped to emoji + link
+      // TMDB gives provider_id numbers — we map the common ones
+      var platformInfo = {
+        8:   { name: 'Netflix',         emoji: '🔴', url: 'https://www.netflix.com/search?q=' },
+        119: { name: 'Amazon Prime',    emoji: '🔵', url: 'https://www.primevideo.com/search/ref=atv_sr_sug_3?phrase=' },
+        337: { name: 'Disney+ Hotstar', emoji: '🏰', url: 'https://www.hotstar.com/in/search?q=' },
+        122: { name: 'Hotstar',         emoji: '🏰', url: 'https://www.hotstar.com/in/search?q=' },
+        2:   { name: 'Apple TV+',       emoji: '🍎', url: 'https://tv.apple.com/search?term=' },
+        3:   { name: 'Google Play',     emoji: '▶️', url: 'https://play.google.com/store/search?q=' },
+        192: { name: 'YouTube',         emoji: '📺', url: 'https://www.youtube.com/results?search_query=' },
+        11:  { name: 'MUBI',            emoji: '🎞️', url: 'https://mubi.com/search?q=' },
+        309: { name: 'ZEE5',            emoji: '🟣', url: 'https://www.zee5.com/search#srchq=' },
+        232: { name: 'SonyLIV',         emoji: '🟠', url: 'https://www.sonyliv.com/search?searchterm=' },
+        531: { name: 'Paramount+',      emoji: '⛰️', url: 'https://www.paramountplus.com/search/' },
+        15:  { name: 'Hulu',            emoji: '🟢', url: 'https://www.hulu.com/search?q=' },
+        384: { name: 'HBO Max',         emoji: '🟤', url: 'https://www.max.com/search?q=' },
+        350: { name: 'Apple TV',        emoji: '🍎', url: 'https://tv.apple.com/search?term=' },
+        283: { name: 'Crunchyroll',     emoji: '🟡', url: 'https://www.crunchyroll.com/search?q=' },
+      };
+
+      var movieTitle   = movieData.title || '';
+      var releaseDate  = movieData.release_date || '';
+      var releaseYear  = '';
+      if (releaseDate != '') {
+        releaseYear = releaseDate.slice(0, 4);
+      }
+
+      // Check if movie is currently in theatres
+      // A movie is "in theatres" if its status says so OR if it released within last 60 days
+      var inTheatres = false;
+      if (movieData.status == 'Released' && releaseYear != '') {
+        var today         = new Date();
+        var releaseObj    = new Date(releaseDate);
+        var daysDiff      = (today - releaseObj) / (1000 * 60 * 60 * 24);
+        if (daysDiff >= 0 && daysDiff <= 60) {
+          inTheatres = true;
+        }
+      }
+
+      // Build the HTML for the section
+      var html = '<div class="wtw-section">';
+      html += '<h2>📺 Where to Watch</h2>';
+      html += '<p class="wtw-sub">Streaming availability for ' + countryName + '</p>';
+
+      // Show theatre booking if movie is new
+      if (inTheatres) {
+        var searchQuery = encodeURIComponent(movieTitle);
+        html += '<div class="in-theatres-box">';
+        html += '<div class="theatre-icon">🎟️</div>';
+        html += '<div>';
+        html += '<h3>Now Showing in Theatres!</h3>';
+        html += '<p>' + movieTitle + ' is currently running in cinemas near you.</p>';
+        html += '<a href="https://in.bookmyshow.com/explore/movies/" target="_blank" class="book-btn">Book on BookMyShow</a>';
+        html += '<a href="https://www.justwatch.com/in/search?q=' + searchQuery + '" target="_blank" class="book-btn-2">Find Showtimes</a>';
+        html += '</div>';
+        html += '</div>';
+      }
+
+      // If no streaming data found at all
+      if (countryData == null) {
+        html += '<p class="wtw-not-found">⚠️ No streaming information found for this movie yet.</p>';
+        html += '<p style="font-size:0.82rem; color:var(--muted); margin-top:8px;">You can check <a href="https://www.justwatch.com/in/search?q=' + encodeURIComponent(movieTitle) + '" target="_blank" style="color:var(--neon-red);">JustWatch</a> for the latest availability.</p>';
+        html += '</div>';
+        document.getElementById('whereToWatchSection').innerHTML = html;
+        return;
+      }
+
+      // Collect all unique providers (stream + rent + buy)
+      var allProviders = [];
+      var seenIds      = [];
+
+      // Helper to add providers from a category
+      function addProviders(list, type) {
+        if (list == null) return;
+        for (var i = 0; i < list.length; i++) {
+          var p   = list[i];
+          var id  = p.provider_id;
+          // Skip duplicates
+          var alreadyAdded = false;
+          for (var j = 0; j < seenIds.length; j++) {
+            if (seenIds[j] == id) { alreadyAdded = true; break; }
+          }
+          if (!alreadyAdded) {
+            seenIds.push(id);
+            allProviders.push({ id: id, name: p.provider_name, logo: p.logo_path, type: type });
+          }
+        }
+      }
+
+      addProviders(countryData.flatrate, 'Subscription');   // included with subscription
+      addProviders(countryData.free,     'Free');            // free to watch
+      addProviders(countryData.rent,     'Rent');            // rent it
+      addProviders(countryData.buy,      'Buy');             // buy it
+
+      if (allProviders.length == 0) {
+        html += '<p class="wtw-not-found">⚠️ Not available on any streaming platform right now.</p>';
+        html += '<p style="font-size:0.82rem; color:var(--muted); margin-top:8px;">Try searching on <a href="https://www.justwatch.com/in/search?q=' + encodeURIComponent(movieTitle) + '" target="_blank" style="color:var(--neon-red);">JustWatch</a>.</p>';
+      } else {
+        html += '<div class="wtw-platforms">';
+
+        for (var i = 0; i < allProviders.length; i++) {
+          var provider = allProviders[i];
+
+          // Get logo emoji and link — use our map, or fallback
+          var emoji   = '🎬';
+          var linkUrl = 'https://www.justwatch.com/in/search?q=' + encodeURIComponent(movieTitle);
+
+          if (platformInfo[provider.id] != null) {
+            emoji   = platformInfo[provider.id].emoji;
+            linkUrl = platformInfo[provider.id].url + encodeURIComponent(movieTitle);
+          }
+
+          // Use TMDB logo if available, otherwise use emoji
+          var logoHTML = '';
+          if (provider.logo != null) {
+            logoHTML = '<img src="' + IMG_BASE + 'w92' + provider.logo + '" style="width:40px; height:40px; border-radius:8px; object-fit:cover;" onerror="this.style.display=\'none\'">';
+          } else {
+            logoHTML = '<span class="platform-logo">' + emoji + '</span>';
+          }
+
+          html += '<a href="' + linkUrl + '" target="_blank" class="platform-card">';
+          html += logoHTML;
+          html += '<div class="platform-info">';
+          html += '<div class="p-name">' + provider.name + '</div>';
+          html += '<div class="p-type">' + provider.type + '</div>';
+          html += '</div>';
+          html += '</a>';
+        }
+
+        html += '</div>';
+
+        // JustWatch credit (they power TMDB's streaming data)
+        html += '<p style="font-size:0.72rem; color:var(--muted); margin-top:16px;">Streaming data powered by <a href="https://www.justwatch.com" target="_blank" style="color:var(--neon-red);">JustWatch</a></p>';
+      }
+
+      html += '</div>';
+      section.innerHTML = html;
+    }
+
+
+    // When the rating slider moves, update the display
+    function updateStarSize(value) {
+      document.getElementById('ratingNum').textContent = value + ' / 10';
+      document.getElementById('starIcon').style.transform = 'scale(' + (1 + value * 0.08) + ')';
+    }
+
+
+    // Save the user's review to localStorage
+    function saveReview() {
+      var movieId    = localStorage.getItem('selectedMovieId');
+      var score      = document.getElementById('ratingSlider').value;
+      var reviewText = document.getElementById('reviewText').value.trim();
+      var username   = localStorage.getItem('userSession');
+
+      // Load existing reviews for this user
+      var savedData = localStorage.getItem('cc_ratings_' + username);
+      var allRatings = {};
+      if (savedData != null) {
+        allRatings = JSON.parse(savedData);
+      }
+
+      // Save this review under the movie ID
+      allRatings[movieId] = {
+        score:  score,
+        review: reviewText,
+        title:  currentMovieTitle,
+        date:   new Date().toLocaleDateString()
+      };
+
+      localStorage.setItem('cc_ratings_' + username, JSON.stringify(allRatings));
+      showToast('✅ Review saved!');
+      showSavedReview(allRatings[movieId]);
+    }
+
+
+    // Load and show a previously saved review
+    function loadSavedReview(movieId) {
+      var username  = localStorage.getItem('userSession');
+      var savedData = localStorage.getItem('cc_ratings_' + username);
+      if (savedData == null) return;
+
+      var allRatings = JSON.parse(savedData);
+      var myReview   = allRatings[movieId];
+      if (myReview == null) return;
+
+      // Fill the slider and text box with saved values
+      document.getElementById('ratingSlider').value = myReview.score;
+      document.getElementById('reviewText').value   = myReview.review || '';
+      updateStarSize(myReview.score);
+      showSavedReview(myReview);
+    }
+
+
+    // Show the saved review card below the form
+    function showSavedReview(review) {
+      // Build star emojis based on score (max 5 stars)
+      var stars = '';
+      var numStars = Math.round(review.score / 2);
+      for (var i = 0; i < numStars; i++) {
+        stars += '⭐';
+      }
+
+      var html = '<div class="review-box">';
+      html += '<div class="rev-name">Your Review · ' + (review.date || '') + '</div>';
+      html += '<div class="rev-stars">' + stars + ' ' + review.score + '/10</div>';
+      if (review.review) {
+        html += '<div class="rev-text">"' + review.review + '"</div>';
+      }
+      html += '</div>';
+
+      document.getElementById('savedReviewBox').innerHTML = html;
+    }
+
+
+    // Fav button on the detail page
+    function clickFav(movieId, title, poster) {
+      var favorites    = getFavorites();
+      var alreadySaved = isMovieFavorite(movieId);
+
+      if (alreadySaved == false) {
+        favorites.push({ id: movieId, title: title, poster: poster });
+        document.getElementById('favBtn').textContent  = '❤️ Favorited';
+        document.getElementById('favBtn').className    = 'btn-glow';
+        showToast('❤️ Added to favorites!');
+      } else {
+        var updated = [];
+        for (var i = 0; i < favorites.length; i++) {
+          if (favorites[i].id != movieId) {
+            updated.push(favorites[i]);
+          }
+        }
+        favorites = updated;
+        document.getElementById('favBtn').textContent  = '🤍 Add to Favorites';
+        document.getElementById('favBtn').className    = 'btn-outline';
+        showToast('💔 Removed from favorites');
+      }
+      saveFavorites(favorites);
+    }
+
+
+    // Watched button on the detail page
+    function clickWatched(movieId, title, poster) {
+      var watched        = getWatched();
+      var alreadyWatched = isMovieWatched(movieId);
+
+      if (alreadyWatched == false) {
+        watched.push({ id: movieId, title: title, poster: poster });
+        document.getElementById('watchBtn').textContent = '✅ Watched';
+        showToast('👁 Marked as watched!');
+      } else {
+        var updated = [];
+        for (var i = 0; i < watched.length; i++) {
+          if (watched[i].id != movieId) {
+            updated.push(watched[i]);
+          }
+        }
+        watched = updated;
+        document.getElementById('watchBtn').textContent = '👁 Mark Watched';
+        showToast('🙈 Removed from watched');
+      }
+      saveWatched(watched);
+    }
+
+
+    // Set nav avatar
+    var username    = localStorage.getItem('userSession');
+    var profileData = localStorage.getItem('cc_profile_' + username);
+    var avatarUrl   = 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + username;
+    if (profileData != null) {
+      var profile = JSON.parse(profileData);
+      if (profile.avatarUrl != null) {
+        avatarUrl = profile.avatarUrl;
+      }
+    }
+    document.getElementById('navAvatar').src = avatarUrl;
+
+    // Start loading the page
+    initSearch();
+    loadMoviePage();
+  </script>
+
+</body>
+</html>

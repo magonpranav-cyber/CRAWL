@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Intensity | CineCrawl</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">CineCrawl 🎬</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="crawl.html">The Crawl</a>
+    </div>
+    <a href="profile.html">
+      <img id="navAvatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid var(--neon-red);">
+    </a>
+  </nav>
+
+  <section class="section" style="padding-top:120px;">
+    <div class="crawl-container">
+
+      <!-- Step progress -->
+      <div class="step-indicator">
+        <div class="step-dot" onclick="window.location='crawl.html'" style="cursor:pointer;">1</div>
+        <div class="step-line"></div>
+        <div class="step-dot active">2</div>
+        <div class="step-line"></div>
+        <div class="step-dot">3</div>
+      </div>
+
+      <h2 style="text-align:center; font-family:'Bebas Neue',sans-serif; font-size:2.8rem; letter-spacing:2px;">
+        Choose Your <span style="color:var(--neon-red);">Intensity</span>
+      </h2>
+
+      <!-- Show which mood was selected -->
+      <p style="text-align:center; color:var(--muted); font-weight:300;">
+        Step 2 of 2 — Mood selected: <strong id="moodLabel" style="color:var(--text);"></strong>
+      </p>
+
+      <!-- Intensity options -->
+      <div class="mood-grid" style="grid-template-columns:1fr 1fr; max-width:500px; margin:40px auto 0;">
+
+        <div class="mood-item" onclick="pickIntensity(1)">
+          <div class="emoji">🍿</div>
+          <p>Light & Casual</p>
+          <small>Popular crowd favorites</small>
+        </div>
+
+        <div class="mood-item" onclick="pickIntensity(2)">
+          <div class="emoji">🔥</div>
+          <p>Deep & Intense</p>
+          <small>Critically acclaimed gems</small>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Show the mood the user picked in step 1
+    var mood = localStorage.getItem('selectedMood');
+
+    // Map mood value to a readable label
+    var moodLabels = {
+      'energetic':    '⚡ Energetic',
+      'melancholy':   '🌑 Melancholy',
+      'mind-bending': '🤯 Mind-Bending',
+      'relaxed':      '🧘 Relaxed',
+      'romantic':     '💖 Romantic',
+      'suspenseful':  '🔦 Suspenseful',
+      'laugh':        '😂 Laugh Out Loud',
+      'animated':     '🎨 Animated',
+      'dark':         '💀 Dark & Gritty'
+    };
+
+    if (moodLabels[mood] != null) {
+      document.getElementById('moodLabel').textContent = moodLabels[mood];
+    } else {
+      document.getElementById('moodLabel').textContent = mood;
+    }
+
+    // When user picks intensity, save it and go to results
+    function pickIntensity(level) {
+      localStorage.setItem('selectedIntensity', level);
+      window.location.href = 'results.html';
+    }
+
+    // Set avatar
+    var username = localStorage.getItem('userSession');
+    var profileData = localStorage.getItem('cc_profile_' + username);
+    var avatarUrl = 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + username;
+    if (profileData != null) {
+      var profile = JSON.parse(profileData);
+      if (profile.avatarUrl != null) {
+        avatarUrl = profile.avatarUrl;
+      }
+    }
+    document.getElementById('navAvatar').src = avatarUrl;
+  </script>
+
+</body>
+</html>

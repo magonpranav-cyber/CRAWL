@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Profile | CineCrawl</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+  <style>
+    /* Tab buttons for Favorites / Watched / Reviews */
+    .tab-row {
+      display: flex;
+      gap: 4px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 28px;
+    }
+    .tab-pill {
+      padding: 10px 20px;
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 0.85rem;
+      border-bottom: 2px solid transparent;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: 'DM Sans', sans-serif;
+      transition: color 0.2s;
+    }
+    .tab-pill.active {
+      color: var(--neon-red);
+      border-bottom-color: var(--neon-red);
+    }
+    /* Avatar picker grid */
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .avatar-option {
+      width: 68px; height: 68px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 3px solid transparent;
+      object-fit: cover;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .avatar-option:hover    { transform: scale(1.08); }
+    .avatar-option.selected { border-color: var(--neon-red); }
+    /* Review item in history */
+    .review-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+    }
+    .review-row:hover { background: var(--surface2); border-radius: 10px; padding-left: 10px; }
+    .empty-note { padding: 40px; text-align: center; color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">CineCrawl 🎬</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="crawl.html">The Crawl</a>
+      <div class="nav-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search movies...">
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+    </div>
+    <button onclick="logout()" class="btn-outline" style="padding:8px 16px; font-size:0.8rem;">Logout</button>
+  </nav>
+
+  <div class="profile-page">
+
+    <!-- Profile header with avatar, name, stats -->
+    <div class="profile-header">
+
+      <!-- Avatar (click to change) -->
+      <div style="position:relative; width:120px; height:120px; cursor:pointer;" onclick="openAvatarModal()">
+        <img id="profilePic" src="" style="width:120px; height:120px; border-radius:50%; object-fit:cover; border:3px solid var(--neon-red);">
+        <div style="position:absolute; inset:0; border-radius:50%; background:rgba(0,0,0,0.55); display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.2s; font-size:1.5rem;"
+          onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0'">📷</div>
+      </div>
+
+      <!-- Name and stats -->
+      <div class="profile-meta">
+        <h2 id="profileName">Loading...</h2>
+        <p id="profileJoined" style="color:var(--muted); font-size:0.85rem; margin-top:4px;"></p>
+        <div class="profile-stats">
+          <div class="stat-box">
+            <div class="num" id="statFavs">0</div>
+            <div class="lbl">Favorites</div>
+          </div>
+          <div class="stat-box">
+            <div class="num" id="statWatched">0</div>
+            <div class="lbl">Watched</div>
+          </div>
+          <div class="stat-box">
+            <div class="num" id="statReviews">0</div>
+            <div class="lbl">Reviews</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preferences form -->
+    <h2 class="profile-section-title">⚙️ <span>My Preferences</span></h2>
+    <div class="profile-form">
+      <div class="form-group">
+        <label>DISPLAY NAME</label>
+        <input type="text" class="form-input" id="inputName"     placeholder="Your display name">
+      </div>
+      <div class="form-group">
+        <label>FAVOURITE ACTOR</label>
+        <input type="text" class="form-input" id="inputActor"    placeholder="e.g. Amitabh Bachchan">
+      </div>
+      <div class="form-group">
+        <label>FAVOURITE DIRECTOR</label>
+        <input type="text" class="form-input" id="inputDirector" placeholder="e.g. Christopher Nolan">
+      </div>
+      <div class="form-group">
+        <label>FAVOURITE STUDIO</label>
+        <input type="text" class="form-input" id="inputStudio"   placeholder="e.g. Marvel, A24">
+      </div>
+    </div>
+
+    <!-- Genre tags -->
+    <div class="form-group" style="margin-top:16px;">
+      <label>FAVOURITE GENRES — tap to select</label>
+      <div class="tag-group" id="genreTagsContainer" style="margin-top:10px;"></div>
+    </div>
+
+    <div style="margin-top:24px; display:flex; gap:12px;">
+      <button class="btn-glow"    onclick="saveProfile()">Save Profile</button>
+      <button class="btn-outline" onclick="resetProfile()">Reset</button>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Tabs: Favorites / Watched / Reviews -->
+    <div class="tab-row">
+      <button class="tab-pill active" id="tabFavs"    onclick="showTab('favs')">❤️ Favorites</button>
+      <button class="tab-pill"        id="tabWatched" onclick="showTab('watched')">👁 Watched</button>
+      <button class="tab-pill"        id="tabReviews" onclick="showTab('reviews')">⭐ Reviews</button>
+    </div>
+
+    <!-- Favorites grid -->
+    <div id="panelFavs">
+      <div class="results-grid" id="favsGrid"></div>
+    </div>
+
+    <!-- Watched grid -->
+    <div id="panelWatched" style="display:none;">
+      <div class="results-grid" id="watchedGrid"></div>
+    </div>
+
+    <!-- Reviews list -->
+    <div id="panelReviews" style="display:none;">
+      <div id="reviewsList"></div>
+    </div>
+
+  </div><!-- end .profile-page -->
+
+
+  <!-- Avatar picker modal -->
+  <div id="avatarModal" style="display:none;">
+    <div class="modal-overlay" onclick="closeAvatarModal(event)">
+      <div class="modal" style="position:relative;">
+        <h2>Choose Your Avatar</h2>
+        <button class="modal-close" onclick="document.getElementById('avatarModal').style.display='none'">✕</button>
+
+        <!-- Grid of preset avatars -->
+        <div class="avatar-grid" id="avatarGrid"></div>
+
+        <!-- Or paste custom URL -->
+        <div style="margin-top:20px;">
+          <label style="font-size:0.8rem; color:var(--muted); display:block; margin-bottom:8px;">OR PASTE A CUSTOM IMAGE URL</label>
+          <div style="display:flex; gap:10px;">
+            <input type="text" class="form-input" id="customAvatarInput" placeholder="https://...">
+            <button class="btn-glow" onclick="useCustomAvatar()">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <script>
+    // All the genres user can pick
+    var allGenres = ['Action', 'Drama', 'Comedy', 'Thriller', 'Romance', 'Sci-Fi', 'Horror', 'Animation', 'Adventure', 'Mystery', 'Crime', 'Fantasy'];
+
+    // 20 preset avatar image URLs using DiceBear
+    var avatarSeeds = ['cat','dog','bird','fox','bear','wolf','tiger','lion','panda','deer','rabbit','owl','horse','shark','frog','snake','turtle','penguin','monkey','eagle'];
+
+    // Get current user info
+    var username   = localStorage.getItem('userSession');
+    var profileKey = 'cc_profile_' + username;
+
+    // Load saved profile data (or start with empty object)
+    var savedProfileData = localStorage.getItem(profileKey);
+    var profile = {};
+    if (savedProfileData != null) {
+      profile = JSON.parse(savedProfileData);
+    }
+
+    // Get all saved users (to show join date)
+    var allUsersData = localStorage.getItem('cc_users');
+    var allUsers = {};
+    if (allUsersData != null) {
+      allUsers = JSON.parse(allUsersData);
+    }
+
+
+    // ── Load everything on page start ──
+    function loadPage() {
+      // Set avatar
+      var avatarUrl = 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + username;
+      if (profile.avatarUrl != null) {
+        avatarUrl = profile.avatarUrl;
+      }
+      document.getElementById('profilePic').src = avatarUrl;
+
+      // Set name
+      var displayName = username;
+      if (profile.displayName != null && profile.displayName != '') {
+        displayName = profile.displayName;
+      } else if (allUsers[username] != null) {
+        displayName = allUsers[username].name;
+      }
+      document.getElementById('profileName').textContent = displayName;
+
+      // Set join date
+      if (allUsers[username] != null && allUsers[username].joined != null) {
+        document.getElementById('profileJoined').textContent = 'Member since ' + allUsers[username].joined;
+      } else {
+        document.getElementById('profileJoined').textContent = '@' + username;
+      }
+
+      // Fill form fields
+      document.getElementById('inputName').value     = profile.displayName || '';
+      document.getElementById('inputActor').value    = profile.actor       || '';
+      document.getElementById('inputDirector').value = profile.director    || '';
+      document.getElementById('inputStudio').value   = profile.studio      || '';
+
+      // Count stats
+      var favs    = getFavorites();
+      var watched = getWatched();
+      var ratingsData = localStorage.getItem('cc_ratings_' + username);
+      var ratings = {};
+      if (ratingsData != null) {
+        ratings = JSON.parse(ratingsData);
+      }
+
+      document.getElementById('statFavs').textContent    = favs.length;
+      document.getElementById('statWatched').textContent = watched.length;
+      document.getElementById('statReviews').textContent = Object.keys(ratings).length;
+
+      // Build genre tags
+      buildGenreTags();
+
+      // Build favorites and watched grids
+      buildFavsGrid(favs);
+      buildWatchedGrid(watched);
+      buildReviewsList(ratings);
+    }
+
+
+    // Build clickable genre tags
+    function buildGenreTags() {
+      var savedGenres = profile.genres || [];
+      var html = '';
+
+      for (var i = 0; i < allGenres.length; i++) {
+        var genre = allGenres[i];
+        var isSelected = false;
+
+        // Check if this genre is in saved list
+        for (var j = 0; j < savedGenres.length; j++) {
+          if (savedGenres[j] == genre) {
+            isSelected = true;
+            break;
+          }
+        }
+
+        var cssClass = isSelected ? 'tag active' : 'tag';
+        html += '<span class="' + cssClass + '" onclick="toggleGenre(\'' + genre + '\', this)">' + genre + '</span>';
+      }
+
+      document.getElementById('genreTagsContainer').innerHTML = html;
+    }
+
+
+    // Toggle a genre tag on/off
+    function toggleGenre(genre, element) {
+      element.classList.toggle('active');
+
+      // Update profile.genres array
+      if (profile.genres == null) {
+        profile.genres = [];
+      }
+
+      var alreadyIn = false;
+      for (var i = 0; i < profile.genres.length; i++) {
+        if (profile.genres[i] == genre) {
+          alreadyIn = true;
+          break;
+        }
+      }
+
+      if (alreadyIn) {
+        // Remove it
+        var updated = [];
+        for (var i = 0; i < profile.genres.length; i++) {
+          if (profile.genres[i] != genre) {
+            updated.push(profile.genres[i]);
+          }
+        }
+        profile.genres = updated;
+      } else {
+        // Add it
+        profile.genres.push(genre);
+      }
+    }
+
+
+    // Build the favorites grid
+    function buildFavsGrid(favs) {
+      if (favs.length == 0) {
+        document.getElementById('favsGrid').innerHTML = '<div class="empty-note">🤍 No favorites yet. Click the ❤ on any movie!</div>';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < favs.length; i++) {
+        // Build a fake movie object so buildCard() works
+        var fakeMovie = {
+          id:           favs[i].id,
+          title:        favs[i].title,
+          poster_path:  favs[i].poster,
+          vote_average: 0
+        };
+        html += buildCard(fakeMovie);
+      }
+      document.getElementById('favsGrid').innerHTML = html;
+    }
+
+
+    // Build the watched grid
+    function buildWatchedGrid(watched) {
+      if (watched.length == 0) {
+        document.getElementById('watchedGrid').innerHTML = '<div class="empty-note">👁 No watched movies yet. Mark movies as watched!</div>';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < watched.length; i++) {
+        var fakeMovie = {
+          id:           watched[i].id,
+          title:        watched[i].title,
+          poster_path:  watched[i].poster,
+          vote_average: 0
+        };
+        html += buildCard(fakeMovie);
+      }
+      document.getElementById('watchedGrid').innerHTML = html;
+    }
+
+
+    // Build the reviews list
+    function buildReviewsList(ratings) {
+      var movieIds = Object.keys(ratings);
+
+      if (movieIds.length == 0) {
+        document.getElementById('reviewsList').innerHTML = '<div class="empty-note">⭐ No reviews yet. Rate a movie on its details page!</div>';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < movieIds.length; i++) {
+        var id     = movieIds[i];
+        var review = ratings[id];
+
+        // Build star emojis
+        var stars = '';
+        var numStars = Math.round(review.score / 2);
+        for (var s = 0; s < numStars; s++) {
+          stars += '⭐';
+        }
+
+        html += '<div class="review-row" onclick="goToDetails(' + id + ')">';
+        html += '<div style="flex:1;">';
+        html += '<div style="font-weight:700; font-size:0.9rem;">' + (review.title || 'Movie #' + id) + '</div>';
+        html += '<div style="color:var(--neon-gold); font-size:0.8rem; margin:3px 0;">' + stars + ' ' + review.score + '/10</div>';
+        if (review.review) {
+          html += '<div style="color:var(--muted); font-size:0.8rem;">"' + review.review.slice(0, 80) + (review.review.length > 80 ? '…' : '') + '"</div>';
+        }
+        html += '</div>';
+        html += '<span style="color:var(--muted); font-size:0.75rem; flex-shrink:0;">' + (review.date || '') + '</span>';
+        html += '</div>';
+      }
+
+      document.getElementById('reviewsList').innerHTML = html;
+    }
+
+
+    // Switch between Favorites / Watched / Reviews tabs
+    function showTab(tabName) {
+      // Hide all panels
+      document.getElementById('panelFavs').style.display    = 'none';
+      document.getElementById('panelWatched').style.display = 'none';
+      document.getElementById('panelReviews').style.display = 'none';
+
+      // Remove active class from all tab buttons
+      document.getElementById('tabFavs').classList.remove('active');
+      document.getElementById('tabWatched').classList.remove('active');
+      document.getElementById('tabReviews').classList.remove('active');
+
+      // Show the selected panel and mark its tab active
+      if (tabName == 'favs') {
+        document.getElementById('panelFavs').style.display = 'block';
+        document.getElementById('tabFavs').classList.add('active');
+      }
+      if (tabName == 'watched') {
+        document.getElementById('panelWatched').style.display = 'block';
+        document.getElementById('tabWatched').classList.add('active');
+      }
+      if (tabName == 'reviews') {
+        document.getElementById('panelReviews').style.display = 'block';
+        document.getElementById('tabReviews').classList.add('active');
+      }
+    }
+
+
+    // Save profile to localStorage
+    function saveProfile() {
+      profile.displayName = document.getElementById('inputName').value.trim();
+      profile.actor       = document.getElementById('inputActor').value.trim();
+      profile.director    = document.getElementById('inputDirector').value.trim();
+      profile.studio      = document.getElementById('inputStudio').value.trim();
+
+      localStorage.setItem(profileKey, JSON.stringify(profile));
+
+      // Update displayed name
+      if (profile.displayName != '') {
+        document.getElementById('profileName').textContent = profile.displayName;
+      }
+
+      showToast('✅ Profile saved!');
+    }
+
+
+    // Reset everything
+    function resetProfile() {
+      var sure = confirm('Reset all profile data? This cannot be undone.');
+      if (sure) {
+        localStorage.removeItem(profileKey);
+        profile = {};
+        loadPage();
+        showToast('Profile reset.');
+      }
+    }
+
+
+    // ── AVATAR MODAL ──
+    function openAvatarModal() {
+      document.getElementById('avatarModal').style.display = 'flex';
+
+      // Build avatar grid
+      var html = '';
+      for (var i = 0; i < avatarSeeds.length; i++) {
+        var url = 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + avatarSeeds[i];
+        var selectedClass = (profile.avatarUrl == url) ? 'avatar-option selected' : 'avatar-option';
+        html += '<img class="' + selectedClass + '" src="' + url + '" onclick="pickAvatar(\'' + url + '\', this)">';
+      }
+      document.getElementById('avatarGrid').innerHTML = html;
+    }
+
+    function closeAvatarModal(event) {
+      // Only close if user clicked the dark overlay, not the white box
+      if (event.target.classList.contains('modal-overlay')) {
+        document.getElementById('avatarModal').style.display = 'none';
+      }
+    }
+
+    function pickAvatar(url, imgElement) {
+      // Remove "selected" from all avatars
+      var allAvatars = document.querySelectorAll('.avatar-option');
+      for (var i = 0; i < allAvatars.length; i++) {
+        allAvatars[i].classList.remove('selected');
+      }
+      // Add "selected" to clicked one
+      imgElement.classList.add('selected');
+
+      // Save and update display
+      profile.avatarUrl = url;
+      localStorage.setItem(profileKey, JSON.stringify(profile));
+      document.getElementById('profilePic').src = url;
+      document.getElementById('avatarModal').style.display = 'none';
+      showToast('Avatar updated!');
+    }
+
+    function useCustomAvatar() {
+      var url = document.getElementById('customAvatarInput').value.trim();
+      if (url == '') return;
+
+      profile.avatarUrl = url;
+      localStorage.setItem(profileKey, JSON.stringify(profile));
+      document.getElementById('profilePic').src = url;
+      document.getElementById('avatarModal').style.display = 'none';
+      showToast('Avatar updated!');
+    }
+
+
+    // Start the page
+    initSearch();
+    loadPage();
+  </script>
+
+</body>
+</html>

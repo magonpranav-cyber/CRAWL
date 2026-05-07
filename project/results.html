@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Results | CineCrawl</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="script.js"></script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo">CineCrawl 🎬</a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="crawl.html">The Crawl</a>
+      <div class="nav-search">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search movies...">
+        <div class="search-dropdown" id="searchDropdown"></div>
+      </div>
+    </div>
+    <a href="profile.html">
+      <img id="navAvatar" src="" style="width:34px; height:34px; border-radius:50%; border:2px solid var(--neon-red);">
+    </a>
+  </nav>
+
+  <div class="results-section">
+    <div class="results-header">
+      <p style="font-size:0.8rem; letter-spacing:3px; color:var(--neon-red); font-weight:700; margin-bottom:8px;" id="pageTag">RESULTS</p>
+      <h1 style="font-family:'Bebas Neue',sans-serif; font-size:3rem; letter-spacing:2px;" id="pageTitle">Loading...</h1>
+      <p style="color:var(--muted); font-size:0.9rem; margin-top:8px;" id="pageSubtitle"></p>
+    </div>
+
+    <!-- Movie grid -->
+    <div class="results-grid" id="moviesGrid">
+      <div class="loader" style="grid-column:1/-1;"><span></span><span></span><span></span></div>
+    </div>
+
+    <!-- Load more button -->
+    <div style="text-align:center; margin-top:40px;" id="loadMoreDiv" style="display:none;">
+      <button class="btn-outline" onclick="loadMoreMovies()">Load More</button>
+    </div>
+  </div>
+
+  <script>
+    // Which page of results we are on (for Load More)
+    var currentPage = 1;
+
+    // Read what the user selected
+    var urlParams    = new URLSearchParams(window.location.search);
+    var mode         = urlParams.get('mode');      // 'trending' or 'toprated' if coming from home
+    var studioId     = localStorage.getItem('activeStudio');
+    var studioName   = localStorage.getItem('activeStudioName');
+    var mood         = localStorage.getItem('selectedMood');
+    var intensity    = localStorage.getItem('selectedIntensity');
+
+    // Mood → TMDB genre ID mapping
+    var moodToGenre = {
+      'energetic':    28,    // Action
+      'melancholy':   18,    // Drama
+      'mind-bending': 9648,  // Mystery
+      'relaxed':      12,    // Adventure
+      'romantic':     10749, // Romance
+      'suspenseful':  53,    // Thriller
+      'laugh':        35,    // Comedy
+      'animated':     16,    // Animation
+      'dark':         27     // Horror
+    };
+
+    // Build the API URL based on how the user got here
+    function buildApiUrl(page) {
+      if (mode == 'trending') {
+        return 'trending/movie/week?page=' + page;
+      }
+
+      if (mode == 'toprated') {
+        return 'movie/top_rated?page=' + page;
+      }
+
+      // Coming from a studio bubble on homepage
+      if (studioId != null && mood == null) {
+        return 'discover/movie?with_companies=' + studioId + '&page=' + page;
+      }
+
+      // Coming from mood + intensity selection
+      var genreId = moodToGenre[mood] || 28;
+      var url = 'discover/movie?with_genres=' + genreId + '&include_adult=false&page=' + page;
+
+      if (intensity == 2) {
+        // Deep = sorted by rating, only films with 500+ votes
+        url = url + '&sort_by=vote_average.desc&vote_count.gte=500';
+      } else {
+        // Casual = sorted by popularity
+        url = url + '&sort_by=popularity.desc';
+      }
+
+      return url;
+    }
+
+    // Set the page title and tag based on mode
+    function setPageHeading() {
+      if (mode == 'trending') {
+        document.getElementById('pageTag').textContent   = 'TRENDING';
+        document.getElementById('pageTitle').textContent = '🔥 Trending This Week';
+      }
+      else if (mode == 'toprated') {
+        document.getElementById('pageTag').textContent   = 'TOP RATED';
+        document.getElementById('pageTitle').textContent = '⭐ Top Rated All Time';
+      }
+      else if (studioId != null && mood == null) {
+        document.getElementById('pageTag').textContent   = 'FRANCHISE';
+        document.getElementById('pageTitle').textContent = (studioName || 'Studio') + ' Films';
+        document.getElementById('pageSubtitle').textContent = 'All movies from ' + (studioName || 'this studio');
+      }
+      else {
+        // Mood mode
+        var moodLabels = {
+          'energetic':'⚡ Energetic Movies', 'melancholy':'🌑 Melancholy Drama',
+          'mind-bending':'🤯 Mind-Bending', 'relaxed':'🧘 Relaxed Picks',
+          'romantic':'💖 Romantic Films', 'suspenseful':'🔦 Suspenseful Thrillers',
+          'laugh':'😂 Comedy Picks', 'animated':'🎨 Animated', 'dark':'💀 Dark & Gritty'
+        };
+        document.getElementById('pageTitle').textContent = moodLabels[mood] || 'Results';
+
+        if (intensity == 2) {
+          document.getElementById('pageTag').textContent      = '🔥 DEEP DIVE';
+          document.getElementById('pageSubtitle').textContent = 'Critically acclaimed · High rated · Hidden gems';
+        } else {
+          document.getElementById('pageTag').textContent      = '🍿 CASUAL PICK';
+          document.getElementById('pageSubtitle').textContent = 'Popular picks · Crowd favorites';
+        }
+      }
+    }
+
+    // Load movies and show them in the grid
+    async function loadMovies(page, clearFirst) {
+      if (clearFirst) {
+        document.getElementById('moviesGrid').innerHTML =
+          '<div class="loader" style="grid-column:1/-1;"><span></span><span></span><span></span></div>';
+      }
+
+      var apiUrl = buildApiUrl(page);
+      var data   = await tmdbFetch(apiUrl);
+      var movies = data.results;
+
+      if (clearFirst) {
+        document.getElementById('moviesGrid').innerHTML = '';
+      }
+
+      if (movies == null || movies.length == 0) {
+        document.getElementById('moviesGrid').innerHTML = '<p style="color:var(--muted); padding:40px;">No movies found.</p>';
+        return;
+      }
+
+      // Add each movie card to the grid
+      for (var i = 0; i < movies.length; i++) {
+        document.getElementById('moviesGrid').innerHTML += buildCard(movies[i]);
+      }
+
+      // Show Load More button if there are more pages
+      if (data.total_pages > page) {
+        document.getElementById('loadMoreDiv').style.display = 'block';
+        currentPage = page;
+      } else {
+        document.getElementById('loadMoreDiv').style.display = 'none';
+      }
+    }
+
+    async function loadMoreMovies() {
+      await loadMovies(currentPage + 1, false);
+    }
+
+    // Set avatar
+    var username = localStorage.getItem('userSession');
+    var profileData = localStorage.getItem('cc_profile_' + username);
+    var avatarUrl = 'https://api.dicebear.com/7.x/thumbs/svg?seed=' + username;
+    if (profileData != null) {
+      var profile = JSON.parse(profileData);
+      if (profile.avatarUrl != null) {
+        avatarUrl = profile.avatarUrl;
+      }
+    }
+    document.getElementById('navAvatar').src = avatarUrl;
+
+    // Run everything
+    setPageHeading();
+    loadMovies(1, true);
+    initSearch();
+  </script>
+
+</body>
+</html>
