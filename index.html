@@ -152,7 +152,7 @@
       var movies = data.results;
 
       var html = '';
-      for (var i = 0; i < movies.length; i++) {
+      for (var i = 0; i < movies.length && i < 8; i++)  {
         html += buildCard(movies[i]);
       }
       document.getElementById(containerId).innerHTML = html;
