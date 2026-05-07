@@ -172,7 +172,7 @@
         var movies = data.results;
 
         var html = '';
-        for (var i = 0; i < movies.length && i < 14; i++) {
+        for (var i = 0; i < movies.length && i < 6; i++) {
           if (movies[i].poster_path) {
             html += '<img src="https://image.tmdb.org/t/p/w200' + movies[i].poster_path + '" loading="lazy">';
           }
